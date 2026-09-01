@@ -1,0 +1,61 @@
+# --- Secrets / environment ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# --- Flutter / Dart ---
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+app.*.symbols
+app.*.map.json
+**/android/.gradle/
+**/android/key.properties
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/ephemeral/
+
+# --- IDEs / editors ---
+.idea/
+.vs/
+*.iml
+# Keep shared VS Code recommendations, ignore personal settings
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# --- OS ---
+Thumbs.db
+.DS_Store
+
+# --- Data / backups ---
+*.dump
+*.sql.gz
+backups/
+pgdata/
+
+# --- Logs ---
+*.log
+logs/
