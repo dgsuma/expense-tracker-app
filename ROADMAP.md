@@ -5,7 +5,7 @@ Each phase ends at a verifiable checkpoint. No phase starts before the previous 
 | Phase | Deliverable | Checkpoint | Status |
 |---|---|---|---|
 | 0 | Architecture, stack selection, repo skeleton, design docs, Git init | Docs reviewed & approved | ✅ Done |
-| 1 | Backend foundation: FastAPI app factory, env config, structured logging, centralized exceptions, `/health` + `/ready`, Dockerfile | `GET /health` → 200 in container | ⬜ |
+| 1 | Backend foundation: FastAPI app factory, env config, structured logging, centralized exceptions, `/health` + `/ready`, Dockerfile | `GET /health` → 200 in container | ✅ Done |
 | 2 | Database layer: SQLAlchemy models, Alembic setup, initial migration, compose Postgres, seed script | `alembic upgrade head` clean; tables present | ⬜ |
 | 3 | Authentication: register/login/refresh/logout, Argon2id, JWT, token rotation | Auth integration tests pass | ⬜ |
 | 4 | Core APIs: categories, payment methods, expenses CRUD, search/filter/pagination, recurring rules | Swagger-verified CRUD; isolation tests pass | ⬜ |

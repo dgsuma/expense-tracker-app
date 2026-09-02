@@ -28,15 +28,28 @@ Prerequisites: Docker Desktop, Python 3.12+, Flutter SDK, VS Code.
 ```powershell
 # 1. Copy environment template and fill in local values
 Copy-Item .env.example .env
+#    (edit .env: set POSTGRES_PASSWORD and JWT_SECRET_KEY)
 
-# 2. Start the database
+# 2. One-time API environment setup
+.\scripts\setup-api.ps1
+
+# 3. Start the database
 docker compose up -d db
 
-# 3. Backend (from Phase 1 onward)
-# .\scripts\dev-api.ps1
+# 4. Run the API with hot reload  →  http://127.0.0.1:8000/docs
+.\scripts\dev-api.ps1
 
-# 4. Flutter app (from Phase 6 onward)
+# 5. Flutter app (from Phase 6 onward)
 # .\scripts\dev-app.ps1
+```
+
+### Other common commands
+
+```powershell
+.\scripts\test-api.ps1          # run backend tests
+.\scripts\lint-api.ps1          # lint + format check (-Fix to auto-fix)
+docker compose up -d --build    # full containerized stack (db + api)
+docker compose down             # stop everything
 ```
 
 ## Documentation
@@ -50,4 +63,4 @@ docker compose up -d db
 
 ## Status
 
-**Phase 0 — architecture and repository foundation.** See [ROADMAP.md](ROADMAP.md) for the phased implementation plan.
+**Phase 1 — backend foundation complete.** See [ROADMAP.md](ROADMAP.md) for the phased implementation plan.

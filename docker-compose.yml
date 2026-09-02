@@ -21,28 +21,27 @@ services:
     networks:
       - backend
 
-  # Phase 1: uncomment when services/api exists
-  # api:
-  #   build:
-  #     context: .
-  #     dockerfile: infrastructure/docker/api.Dockerfile
-  #   container_name: expense-tracker-api
-  #   restart: unless-stopped
-  #   env_file: .env
-  #   environment:
-  #     POSTGRES_HOST: db
-  #   ports:
-  #     - "${API_PORT:-8000}:8000"
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 5
-  #   networks:
-  #     - backend
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/api.Dockerfile
+    container_name: expense-tracker-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
 
   # Phase 11: rate limiting / cache
   # redis:
