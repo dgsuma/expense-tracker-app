@@ -59,3 +59,7 @@ pgdata/
 # --- Logs ---
 *.log
 logs/
+
+# --- Ad-hoc test/diagnostic output ---
+pt-*.txt
+*-out.txt
