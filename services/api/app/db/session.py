@@ -25,7 +25,8 @@ def get_engine() -> AsyncEngine:
             max_overflow=10,
             pool_pre_ping=True,
             # Fail fast rather than hang when the DB is unreachable (tests, misconfig).
-            connect_args={"connect_timeout": 10},
+            # asyncpg's connect() uses "timeout" (seconds), not "connect_timeout".
+            connect_args={"timeout": 10},
         )
         _session_factory = async_sessionmaker(_engine, expire_on_commit=False)
     return _engine
