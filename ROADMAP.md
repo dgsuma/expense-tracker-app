@@ -10,7 +10,7 @@ Each phase ends at a verifiable checkpoint. No phase starts before the previous 
 | 3 | Authentication: register/login/refresh/logout, Argon2id, JWT, token rotation | Auth integration tests pass | ✅ Done |
 | 4 | Core APIs: categories, payment methods, expenses CRUD, search/filter/pagination, recurring rules | Swagger-verified CRUD; isolation tests pass | ✅ Done |
 | 5 | Budgets + analytics: summaries, by-category, trends, budget-vs-actual, CSV export | Report endpoints verified against fixtures | ✅ Done |
-| 6 | Flutter app: auth flow, expense CRUD, categories, dashboards/charts, responsive phone/tablet/web | Runs on Android emulator + Chrome; golden tests | ⬜ |
+| 6 | Flutter app: auth flow, expense CRUD, categories, dashboards/charts, responsive phone/tablet/web | Runs on Android emulator + Chrome; golden tests | ✅ Done |
 | 7 | Testing: unit + integration suites, coverage gate (≥80% backend) | `pytest` green locally and in container | ⬜ |
 | 8 | Docker hardening: multi-stage builds, non-root users, health checks, full compose stack | `docker compose up` → full stack healthy | ⬜ |
 | 9 | Kubernetes: Kustomize base + dev/prod overlays, secrets strategy | `kustomize build` valid for both overlays | ⬜ |
