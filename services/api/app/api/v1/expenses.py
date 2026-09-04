@@ -1,10 +1,13 @@
-"""Expense endpoints with search, filtering, and pagination."""
+"""Expense endpoints with search, filtering, pagination, and CSV export."""
 
+import csv
+import io
 from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
@@ -60,6 +63,50 @@ async def create_expense(
 ) -> ExpenseResponse:
     expense = await ExpenseService(session).create(user_id=current_user.id, **body.model_dump())
     return ExpenseResponse.model_validate(expense)
+
+
+@router.get("/export")
+async def export_expenses_csv(
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+    date_from: date | None = None,
+    date_to: date | None = None,
+    category_id: UUID | None = None,
+    search: str | None = None,
+) -> StreamingResponse:
+    """Export the filtered expense set as CSV (Excel-compatible, UTF-8 BOM)."""
+    expenses, _ = await ExpenseService(session).list(
+        current_user.id,
+        page=1,
+        page_size=10000,  # export cap
+        date_from=date_from,
+        date_to=date_to,
+        category_id=category_id,
+        search=search,
+        sort="-expense_date",
+    )
+
+    buffer = io.StringIO()
+    buffer.write("﻿")  # UTF-8 BOM so Excel opens it correctly
+    writer = csv.writer(buffer)
+    writer.writerow(["Date", "Description", "Amount", "Currency", "Notes", "Created"])
+    for e in expenses:
+        writer.writerow(
+            [
+                e.expense_date.isoformat(),
+                e.description,
+                str(e.amount),
+                e.currency,
+                e.notes or "",
+                e.created_at.isoformat(),
+            ]
+        )
+    buffer.seek(0)
+    return StreamingResponse(
+        iter([buffer.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=expenses.csv"},
+    )
 
 
 @router.get("/{expense_id}", response_model=ExpenseResponse)
