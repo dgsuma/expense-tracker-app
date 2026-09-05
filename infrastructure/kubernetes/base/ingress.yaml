@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: expense-tracker
+  namespace: expense-tracker
+  annotations:
+    # TLS termination at the ingress; cert-manager issues the certificate.
+    cert-manager.io/cluster-issuer: "letsencrypt"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: expenses.example.com  # overridden per-overlay
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - expenses.example.com
+      secretName: expense-tracker-tls

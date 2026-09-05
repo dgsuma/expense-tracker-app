@@ -1,0 +1,8 @@
+# FluxCD GitOps source layout.
+# This file is the entry point Flux uses to reconcile the cluster.
+# Point a Flux Kustomization resource at this directory (or the overlays).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../overlays/prod

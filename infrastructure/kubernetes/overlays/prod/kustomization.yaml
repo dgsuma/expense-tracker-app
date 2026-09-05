@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: expense-tracker
+
+resources:
+  - ../../base
+
+# Prod: pinned image tags (set by CI), higher replicas, real hostname.
+images:
+  - name: expense-tracker-api
+    newTag: "0.1.0"  # CI overrides with the release tag
+  - name: expense-tracker-web
+    newTag: "0.1.0"
+
+patches:
+  - target:
+      kind: Deployment
+      name: api
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: Ingress
+      name: expense-tracker
+    patch: |
+      - op: replace
+        path: /spec/rules/0/host
+        value: expenses.yourdomain.com
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: expenses.yourdomain.com
+  - target:
+      kind: ConfigMap
+      name: expense-tracker-config
+    patch: |
+      - op: replace
+        path: /data/API_CORS_ORIGINS
+        value: "https://expenses.yourdomain.com"

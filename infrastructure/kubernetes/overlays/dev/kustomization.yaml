@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: expense-tracker
+
+resources:
+  - ../../base
+
+# Dev: single replicas, latest images, local hostnames.
+images:
+  - name: expense-tracker-api
+    newTag: dev
+  - name: expense-tracker-web
+    newTag: dev
+
+patches:
+  - target:
+      kind: Deployment
+      name: api
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target:
+      kind: Deployment
+      name: web
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target:
+      kind: Ingress
+      name: expense-tracker
+    patch: |
+      - op: replace
+        path: /spec/rules/0/host
+        value: expenses.dev.local
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: expenses.dev.local
