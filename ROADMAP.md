@@ -12,7 +12,7 @@ Each phase ends at a verifiable checkpoint. No phase starts before the previous 
 | 5 | Budgets + analytics: summaries, by-category, trends, budget-vs-actual, CSV export | Report endpoints verified against fixtures | ✅ Done |
 | 6 | Flutter app: auth flow, expense CRUD, categories, dashboards/charts, responsive phone/tablet/web | Runs on Android emulator + Chrome; golden tests | ✅ Done |
 | 7 | Testing: unit + integration suites, coverage gate (≥80% backend) | `pytest` green locally and in container | ✅ Done |
-| 8 | Docker hardening: multi-stage builds, non-root users, health checks, full compose stack | `docker compose up` → full stack healthy | ⬜ |
+| 8 | Docker hardening: multi-stage builds, non-root users, health checks, full compose stack | `docker compose up` → full stack healthy | ✅ Done |
 | 9 | Kubernetes: Kustomize base + dev/prod overlays, secrets strategy | `kustomize build` valid for both overlays | ⬜ |
 | 10 | CI/CD: Jenkinsfile (lint → test → build → scan → push → GitOps update), GitOps repo layout | Pipeline stages documented & dry-run | ⬜ |
 | 11 | Production hardening: Redis rate limiting, backup CronJob, security headers, billing interface boundary, audit review | Security checklist sign-off | ⬜ |

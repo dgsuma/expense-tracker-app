@@ -1,8 +1,10 @@
 # Expense Tracker API — multi-stage build.
-# Phase 1 version; Phase 8 adds hardening (distroless/digest pinning, trivy gates).
+# Hardened: build-arg base image (pin a digest in CI), non-root, minimal layers.
+
+ARG PYTHON_IMAGE=python:3.12-slim
 
 # ---------- builder ----------
-FROM python:3.12-slim AS builder
+FROM ${PYTHON_IMAGE} AS builder
 
 ENV PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -13,7 +15,7 @@ COPY services/api/requirements.txt .
 RUN pip install --prefix=/install -r requirements.txt
 
 # ---------- runtime ----------
-FROM python:3.12-slim AS runtime
+FROM ${PYTHON_IMAGE} AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

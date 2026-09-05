@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 8: Docker hardening — multi-stage API and web Dockerfiles, non-root runtimes, health checks on all services, `.dockerignore`, nginx config with security headers and SPA fallback, full compose stack (db + api + web), build-arg base image for digest pinning, Docker deployment doc.
 - Phase 7: testing — backend unit test suite (51 tests: security/hashing/JWT, schema validation, analytics period bounds, AuthService with mocked repos), pytest-cov with coverage config and gate, testing strategy doc. Unit coverage ~69% (DB-dependent layers covered by integration tests in CI).
 - Phase 6: Flutter app — cross-platform (Android/iOS/tablet/web) with Riverpod state management, go_router auth-gated routing, Dio API client with automatic token refresh, secure token storage, login/register screens, dashboard (summary cards, category pie chart, spending trend bar chart, responsive wide/narrow layout), expense list with swipe-to-delete and add/edit form. Model unit tests; web release build verified.
 - Phase 5: budgets + analytics — budget CRUD, budget-vs-actual with period bounds and subcategory rollup, analytics summaries (daily/weekly/monthly/annual), category breakdown with percentages, spending trends (day/week/month buckets), and CSV export (UTF-8 BOM, Excel-compatible).

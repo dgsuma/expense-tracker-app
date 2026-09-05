@@ -1,0 +1,54 @@
+# Version control
+.git
+.gitignore
+.github
+
+# Secrets / environment — never baked into images
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Python
+**/__pycache__
+**/*.pyc
+**/.venv
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.coverage
+**/htmlcov
+**/cov.json
+
+# Flutter / Dart
+**/.dart_tool
+**/build
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# IDEs / OS
+.idea
+.vs
+.vscode
+*.iml
+Thumbs.db
+.DS_Store
+
+# Docs / tests / infra not needed in the runtime image
+docs
+tests
+**/*.md
+!README.md
+
+# Data / backups / logs
+backups
+pgdata
+*.dump
+*.log
+logs
+
+# Ad-hoc output
+**/*-out.txt
+**/pt-*.txt
