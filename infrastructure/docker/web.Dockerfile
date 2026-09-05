@@ -25,6 +25,6 @@ COPY --from=builder /app/build/web /usr/share/nginx/html
 EXPOSE 8080
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
-  CMD wget -q -O /dev/null http://localhost:8080/ || exit 1
+  CMD curl -f http://localhost:8080/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

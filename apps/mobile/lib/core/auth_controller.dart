@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -35,6 +37,11 @@ class AuthController extends StateNotifier<AuthState> {
   final _storage = const FlutterSecureStorage();
   String? _refreshToken;
 
+  /// Completes when the initial session restore (or login) finishes and the
+  /// access token is set. Data providers await this before making requests.
+  Future<void> get ready => _readyCompleter.future;
+  final _readyCompleter = Completer<void>();
+
   AuthController(this._api) : super(const AuthState(isLoading: true)) {
     _api.setRefreshHandler(_refresh);
     _restoreSession();
@@ -55,6 +62,8 @@ class AuthController extends StateNotifier<AuthState> {
       }
     } catch (_) {
       state = const AuthState();
+    } finally {
+      if (!_readyCompleter.isCompleted) _readyCompleter.complete();
     }
   }
 
@@ -92,6 +101,7 @@ class AuthController extends StateNotifier<AuthState> {
       _refreshToken = response.data['refresh_token'] as String;
       await _storage.write(key: 'refresh_token', value: _refreshToken);
       await _loadUser();
+      if (!_readyCompleter.isCompleted) _readyCompleter.complete();
       return true;
     } catch (e) {
       state =
