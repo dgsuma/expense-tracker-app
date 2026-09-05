@@ -85,12 +85,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       helperText: 'Min 12 chars, upper, lower, digit',
                     ),
                     validator: (v) {
-                      if (v == null || v.length < 12)
+                      if (v == null || v.length < 12) {
                         return 'At least 12 characters';
-                      if (!v.contains(RegExp(r'[A-Z]')))
+                      }
+                      if (!v.contains(RegExp(r'[A-Z]'))) {
                         return 'Needs an uppercase letter';
-                      if (!v.contains(RegExp(r'[a-z]')))
+                      }
+                      if (!v.contains(RegExp(r'[a-z]'))) {
                         return 'Needs a lowercase letter';
+                      }
                       if (!v.contains(RegExp(r'[0-9]'))) return 'Needs a digit';
                       return null;
                     },

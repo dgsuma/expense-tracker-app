@@ -122,8 +122,9 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
                 decoration: const InputDecoration(labelText: 'Amount'),
                 validator: (v) {
                   final parsed = double.tryParse(v ?? '');
-                  if (parsed == null || parsed <= 0)
+                  if (parsed == null || parsed <= 0) {
                     return 'Enter a valid amount';
+                  }
                   return null;
                 },
               ),

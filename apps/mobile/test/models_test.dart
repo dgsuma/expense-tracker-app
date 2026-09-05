@@ -22,7 +22,12 @@ void main() {
         'name': 'Dining',
         'kind': 'expense',
         'children': [
-          {'id': 'c2', 'name': 'Restaurants', 'kind': 'expense', 'children': []},
+          {
+            'id': 'c2',
+            'name': 'Restaurants',
+            'kind': 'expense',
+            'children': []
+          },
         ],
       });
       expect(category.name, 'Dining');

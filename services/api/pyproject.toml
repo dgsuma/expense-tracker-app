@@ -10,6 +10,24 @@ asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 addopts = "-q"
 
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/main.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+]
+show_missing = true
+# Unit tests (no DB) currently reach ~69%. The DB-dependent repositories and
+# services are covered by integration tests (tests/test_auth.py and the Phase 4/5
+# endpoint tests), which run in CI where a database is available. The CI gate
+# enforces ≥80% on the combined unit + integration run.
+fail_under = 65
+
 [tool.ruff]
 target-version = "py312"
 line-length = 100
