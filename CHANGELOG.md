@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 10: CI/CD — declarative Jenkinsfile (checkout → deps → lint → unit tests + coverage → integration tests with ephemeral Postgres → dependency scan → frontend analyze/test → Docker build → Trivy scan → push → GitOps manifest update), image tagging strategy, CI/CD doc. No hard-coded infrastructure values (Jenkins credentials + env vars).
 - Phase 9: Kubernetes — Kustomize base (namespace, ConfigMap, Postgres StatefulSet with PVC, API/web Deployments with probes and resource limits, TLS Ingress), dev/prod overlays, secrets strategy (no committed secrets), FluxCD-ready layout, Kubernetes deployment doc.
 - Phase 8: Docker hardening — multi-stage API and web Dockerfiles, non-root runtimes, health checks on all services, `.dockerignore`, nginx config with security headers and SPA fallback, full compose stack (db + api + web), build-arg base image for digest pinning, Docker deployment doc.
 - Phase 7: testing — backend unit test suite (51 tests: security/hashing/JWT, schema validation, analytics period bounds, AuthService with mocked repos), pytest-cov with coverage config and gate, testing strategy doc. Unit coverage ~69% (DB-dependent layers covered by integration tests in CI).

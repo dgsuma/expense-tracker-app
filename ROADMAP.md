@@ -14,7 +14,7 @@ Each phase ends at a verifiable checkpoint. No phase starts before the previous 
 | 7 | Testing: unit + integration suites, coverage gate (≥80% backend) | `pytest` green locally and in container | ✅ Done |
 | 8 | Docker hardening: multi-stage builds, non-root users, health checks, full compose stack | `docker compose up` → full stack healthy | ✅ Done |
 | 9 | Kubernetes: Kustomize base + dev/prod overlays, secrets strategy | `kustomize build` valid for both overlays | ✅ Done |
-| 10 | CI/CD: Jenkinsfile (lint → test → build → scan → push → GitOps update), GitOps repo layout | Pipeline stages documented & dry-run | ⬜ |
+| 10 | CI/CD: Jenkinsfile (lint → test → build → scan → push → GitOps update), GitOps repo layout | Pipeline stages documented & dry-run | ✅ Done |
 | 11 | Production hardening: Redis rate limiting, backup CronJob, security headers, billing interface boundary, audit review | Security checklist sign-off | ⬜ |
 
 ## Post-1.0 (commercial)
