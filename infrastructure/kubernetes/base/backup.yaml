@@ -1,0 +1,65 @@
+# Scheduled PostgreSQL backups via a CronJob.
+# Dumps the database to a timestamped file on a persistent volume.
+# In production, ship the dump to object storage (S3/MinIO) for off-site retention.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: db-backup
+  namespace: expense-tracker
+spec:
+  schedule: "0 2 * * *"  # daily at 02:00
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: postgres:16-alpine
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: expense-tracker-secrets
+                      key: POSTGRES_PASSWORD
+                - name: POSTGRES_DB
+                  valueFrom:
+                    configMapKeyRef:
+                      name: expense-tracker-config
+                      key: POSTGRES_DB
+                - name: POSTGRES_USER
+                  valueFrom:
+                    configMapKeyRef:
+                      name: expense-tracker-config
+                      key: POSTGRES_USER
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  TS=$(date +%Y%m%d-%H%M%S)
+                  pg_dump -h db -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > /backups/backup-$TS.sql.gz
+                  echo "Backup written: backup-$TS.sql.gz"
+                  # Retain last 14 days
+                  find /backups -name 'backup-*.sql.gz' -mtime +14 -delete
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: db-backups
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-backups
+  namespace: expense-tracker
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 10Gi

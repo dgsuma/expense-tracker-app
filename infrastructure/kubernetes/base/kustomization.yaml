@@ -7,6 +7,8 @@ resources:
   - db.yaml
   - api.yaml
   - web.yaml
+  - redis.yaml
+  - backup.yaml
   - ingress.yaml
 
 # Image tags are set per-overlay (dev/prod) via the images transformer.

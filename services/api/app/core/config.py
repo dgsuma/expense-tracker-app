@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     postgres_user: str = "expense_app"
     postgres_password: str = ""
 
+    # Redis (rate limiting / cache) — optional; rate limiting is disabled when unset.
+    redis_url: str | None = None
+
     @property
     def database_url(self) -> str:
         """Async SQLAlchemy connection URL assembled from discrete env vars."""

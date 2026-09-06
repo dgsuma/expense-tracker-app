@@ -24,6 +24,8 @@ from app.core.exceptions import (
 )
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
+from app.core.rate_limit import RateLimitMiddleware, build_redis_client
+from app.core.security_headers import SecurityHeadersMiddleware
 from app.db.session import dispose_engine
 
 
@@ -55,7 +57,21 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestContextMiddleware)
+
+    # Rate limiting (Redis-backed when REDIS_URL is set; no-op otherwise).
+    # The Redis client is built lazily on first request to avoid blocking startup.
+    redis_client_holder: dict = {}
+
+    @app.middleware("http")
+    async def rate_limit_middleware(request, call_next):  # type: ignore[no-untyped-def]
+        if "client" not in redis_client_holder:
+            redis_client_holder["client"] = await build_redis_client()
+        if redis_client_holder["client"] is None:
+            return await call_next(request)
+        middleware = RateLimitMiddleware(app, redis_client_holder["client"])
+        return await middleware.dispatch(request, call_next)
 
     # Centralized exception handling (RFC 7807 problem+json)
     app.add_exception_handler(AppError, app_error_handler)  # type: ignore[arg-type]
