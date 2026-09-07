@@ -1,5 +1,17 @@
 // Data models matching the API schemas.
 
+/// ISO 4217 currency codes supported by the app.
+/// Note: Sri Lankan Rupee is LKR (not "SLR").
+const List<String> kSupportedCurrencies = [
+  'EUR',
+  'USD',
+  'GBP',
+  'JPY',
+  'CHF',
+  'AUD',
+  'LKR',
+];
+
 class User {
   final String id;
   final String email;

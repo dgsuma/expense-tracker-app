@@ -25,6 +25,7 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
   String? _categoryId;
   String? _paymentMethodId;
   late DateTime _date = widget.expense?.expenseDate ?? DateTime.now();
+  late String _currency = widget.expense?.currency ?? 'EUR';
   bool _saving = false;
 
   @override
@@ -55,7 +56,7 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
       'category_id': _categoryId,
       'payment_method_id': _paymentMethodId,
       'amount': double.parse(_amountController.text),
-      'currency': 'EUR',
+      'currency': _currency,
       'expense_date': DateFormat('yyyy-MM-dd').format(_date),
       'description': _descriptionController.text.trim(),
       'notes': _notesController.text.trim().isEmpty
@@ -127,6 +128,15 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _currency,
+                decoration: const InputDecoration(labelText: 'Currency'),
+                items: kSupportedCurrencies
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
+                onChanged: (v) => setState(() => _currency = v ?? 'EUR'),
               ),
               const SizedBox(height: 12),
               categories.when(

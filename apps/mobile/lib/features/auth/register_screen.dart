@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth_controller.dart';
+import '../../core/models.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -18,7 +19,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordController = TextEditingController();
   String _currency = 'EUR';
 
-  static const _currencies = ['EUR', 'USD', 'GBP', 'JPY', 'CHF'];
+  static const _currencies = kSupportedCurrencies;
 
   @override
   void dispose() {
