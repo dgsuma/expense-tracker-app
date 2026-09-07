@@ -58,6 +58,7 @@ docker compose down             # stop everything
 - [Database schema](docs/database-schema.md)
 - [API design](docs/api-design.md)
 - [Security model](docs/security-model.md)
+- [LAN & phone access](docs/lan-access.md)
 - [Roadmap](ROADMAP.md)
 - [Security policy](SECURITY.md)
 
