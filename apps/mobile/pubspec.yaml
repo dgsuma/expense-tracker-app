@@ -15,6 +15,8 @@ dependencies:
   dio: ^5.7.0
   # Secure token storage (Keychain/Keystore); falls back to web storage on web
   flutter_secure_storage: ^9.2.2
+  # Web-safe key/value storage used for the refresh token on web builds
+  shared_preferences: ^2.3.2
   # Charts
   fl_chart: ^0.69.0
   # Formatting

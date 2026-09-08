@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api_client.dart';
 import 'models.dart';
+import 'token_storage.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
@@ -34,7 +34,7 @@ class AuthState {
 
 class AuthController extends StateNotifier<AuthState> {
   final ApiClient _api;
-  final _storage = const FlutterSecureStorage();
+  final TokenStorage _storage = createTokenStorage();
   String? _refreshToken;
 
   /// Completes when the initial session restore (or login) finishes and the
@@ -49,7 +49,7 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> _restoreSession() async {
     try {
-      _refreshToken = await _storage.read(key: 'refresh_token');
+      _refreshToken = await _storage.read();
       if (_refreshToken == null) {
         state = const AuthState();
         return;
@@ -76,7 +76,7 @@ class AuthController extends StateNotifier<AuthState> {
       );
       _api.setAccessToken(response.data['access_token'] as String);
       _refreshToken = response.data['refresh_token'] as String;
-      await _storage.write(key: 'refresh_token', value: _refreshToken);
+      await _storage.write(_refreshToken!);
       return true;
     } catch (_) {
       await _clearTokens();
@@ -99,7 +99,7 @@ class AuthController extends StateNotifier<AuthState> {
       );
       _api.setAccessToken(response.data['access_token'] as String);
       _refreshToken = response.data['refresh_token'] as String;
-      await _storage.write(key: 'refresh_token', value: _refreshToken);
+      await _storage.write(_refreshToken!);
       await _loadUser();
       if (!_readyCompleter.isCompleted) _readyCompleter.complete();
       return true;
@@ -141,6 +141,6 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> _clearTokens() async {
     _api.setAccessToken(null);
     _refreshToken = null;
-    await _storage.delete(key: 'refresh_token');
+    await _storage.delete();
   }
 }
