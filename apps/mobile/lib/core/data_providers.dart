@@ -42,6 +42,9 @@ Future<void> _ensureAuthenticated(Ref ref) async {
 
 final categoriesProvider = FutureProvider<List<Category>>((ref) async {
   await _ensureAuthenticated(ref);
+  // Re-fetch whenever the authenticated user changes so a different user never
+  // sees the previous user's cached data.
+  ref.watch(authControllerProvider.select((s) => s.user?.id));
   final api = ref.watch(apiClientProvider);
   final response = await api.dio.get('/api/v1/categories');
   return (response.data as List<dynamic>)
@@ -51,6 +54,7 @@ final categoriesProvider = FutureProvider<List<Category>>((ref) async {
 
 final paymentMethodsProvider = FutureProvider<List<PaymentMethod>>((ref) async {
   await _ensureAuthenticated(ref);
+  ref.watch(authControllerProvider.select((s) => s.user?.id));
   final api = ref.watch(apiClientProvider);
   final response = await api.dio.get('/api/v1/payment-methods');
   return (response.data as List<dynamic>)
@@ -60,6 +64,7 @@ final paymentMethodsProvider = FutureProvider<List<PaymentMethod>>((ref) async {
 
 final expensesProvider = FutureProvider<ExpensePage>((ref) async {
   await _ensureAuthenticated(ref);
+  ref.watch(authControllerProvider.select((s) => s.user?.id));
   final api = ref.watch(apiClientProvider);
   final response = await api.dio.get('/api/v1/expenses');
   return ExpensePage.fromJson(response.data as Map<String, dynamic>);
@@ -67,6 +72,7 @@ final expensesProvider = FutureProvider<ExpensePage>((ref) async {
 
 final summaryProvider = FutureProvider<Summary>((ref) async {
   await _ensureAuthenticated(ref);
+  ref.watch(authControllerProvider.select((s) => s.user?.id));
   final api = ref.watch(apiClientProvider);
   final response =
       await api.dio.get('/api/v1/analytics/summary?period=monthly');
@@ -75,6 +81,7 @@ final summaryProvider = FutureProvider<Summary>((ref) async {
 
 final categoryTotalsProvider = FutureProvider<List<CategoryTotal>>((ref) async {
   await _ensureAuthenticated(ref);
+  ref.watch(authControllerProvider.select((s) => s.user?.id));
   final api = ref.watch(apiClientProvider);
   final response = await api.dio.get('/api/v1/analytics/by-category');
   return (response.data['items'] as List<dynamic>)
@@ -84,6 +91,7 @@ final categoryTotalsProvider = FutureProvider<List<CategoryTotal>>((ref) async {
 
 final trendsProvider = FutureProvider<List<TrendPoint>>((ref) async {
   await _ensureAuthenticated(ref);
+  ref.watch(authControllerProvider.select((s) => s.user?.id));
   final api = ref.watch(apiClientProvider);
   final response =
       await api.dio.get('/api/v1/analytics/trends?granularity=day');
