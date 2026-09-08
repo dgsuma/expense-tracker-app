@@ -16,14 +16,24 @@ class ApiClient {
         )) {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
-        if (_accessToken != null) {
+        // Public auth endpoints must not carry a stale access token — otherwise
+        // an expired token from a previous session makes register/login fail.
+        final isPublicAuth = options.path.startsWith('/api/v1/auth/');
+        if (_accessToken != null && !isPublicAuth) {
           options.headers['Authorization'] = 'Bearer $_accessToken';
         }
         handler.next(options);
       },
       onError: (error, handler) async {
         // On 401, try a single token refresh then retry the request once.
-        if (error.response?.statusCode == 401 && _onRefresh != null) {
+        // Never do this for the auth endpoints themselves — a 401 there (bad
+        // credentials, failed refresh) must surface directly, not trigger
+        // another refresh attempt (which could loop).
+        final isAuthEndpoint =
+            error.requestOptions.path.startsWith('/api/v1/auth/');
+        if (error.response?.statusCode == 401 &&
+            _onRefresh != null &&
+            !isAuthEndpoint) {
           final refreshed = await _onRefresh!();
           if (refreshed) {
             final opts = error.requestOptions;

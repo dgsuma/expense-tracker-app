@@ -38,9 +38,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           _currency,
         );
     if (!success && mounted) {
+      final error = ref.read(authControllerProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Registration failed. Try a different email.')),
+        SnackBar(
+            content:
+                Text(error ?? 'Registration failed. Try a different email.')),
       );
     }
   }

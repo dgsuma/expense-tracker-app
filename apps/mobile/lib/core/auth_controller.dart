@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api_client.dart';
@@ -121,6 +122,15 @@ class AuthController extends StateNotifier<AuthState> {
         'default_currency': currency,
       });
       return login(email, password);
+    } on DioException catch (e) {
+      // Surface the real error (validation, conflict, network) to help the user.
+      final detail = e.response?.data is Map<String, dynamic>
+          ? (e.response!.data['detail'] ?? e.response!.data['title'])
+          : null;
+      state = state.copyWith(
+          isLoading: false,
+          error: detail?.toString() ?? 'Registration failed');
+      return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: 'Registration failed');
       return false;
