@@ -128,8 +128,7 @@ class AuthController extends StateNotifier<AuthState> {
           ? (e.response!.data['detail'] ?? e.response!.data['title'])
           : null;
       state = state.copyWith(
-          isLoading: false,
-          error: detail?.toString() ?? 'Registration failed');
+          isLoading: false, error: detail?.toString() ?? 'Registration failed');
       return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: 'Registration failed');

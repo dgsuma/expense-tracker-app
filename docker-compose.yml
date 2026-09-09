@@ -48,8 +48,9 @@ services:
       context: .
       dockerfile: infrastructure/docker/web.Dockerfile
       args:
-        # The browser calls the API directly; use the host-mapped API URL.
-        API_BASE_URL: ${WEB_API_BASE_URL:-http://localhost:8000}
+        # Empty = same-origin /api calls, proxied by nginx to the api service.
+        # No host/IP baked in, so the build works from any address.
+        API_BASE_URL: ${WEB_API_BASE_URL:-}
     container_name: expense-tracker-web
     restart: unless-stopped
     ports:

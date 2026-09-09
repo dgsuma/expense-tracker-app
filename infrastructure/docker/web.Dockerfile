@@ -10,9 +10,10 @@ WORKDIR /app
 COPY apps/mobile/pubspec.yaml apps/mobile/pubspec.lock ./
 RUN flutter pub get
 
-# Build the web bundle. API_BASE_URL is injected at build time.
+# Build the web bundle. API_BASE_URL defaults to empty = same-origin /api calls
+# (proxied by nginx), so the build is independent of host/IP.
 COPY apps/mobile ./
-ARG API_BASE_URL=http://localhost:8000
+ARG API_BASE_URL=
 RUN flutter build web --release --dart-define=API_BASE_URL=${API_BASE_URL}
 
 # ---------- runtime ----------
