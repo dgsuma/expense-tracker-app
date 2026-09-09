@@ -12,6 +12,8 @@ data:
   POSTGRES_USER: "expense_app"
   API_PORT: "8000"
   # Overridden per-overlay. Comma-separated allowed origins for the web app.
-  API_CORS_ORIGINS: "http://localhost:8080"
+  # The web app is same-origin via the nginx /api/ proxy, so CORS is only for
+  # direct API access (e.g. Swagger). Default to the Tailscale MagicDNS origin.
+  API_CORS_ORIGINS: "https://expense-tracker.tailnet-name.ts.net"
   # Redis for rate limiting (service name in the cluster).
   REDIS_URL: "redis://redis:6379/0"

@@ -1,32 +1,20 @@
+# Private ingress via the Tailscale Kubernetes Operator.
+# The app is reachable ONLY over the tailnet at a MagicDNS HTTPS URL
+# (https://expense-tracker.<tailnet>.ts.net). No public ingress, no Funnel.
+# Traffic enters the web service; the web nginx proxies /api/ to the API
+# service internally, so only the web backend is exposed here.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: expense-tracker
   namespace: expense-tracker
-  annotations:
-    # TLS termination at the ingress; cert-manager issues the certificate.
-    cert-manager.io/cluster-issuer: "letsencrypt"
 spec:
-  ingressClassName: nginx
-  rules:
-    - host: expenses.example.com  # overridden per-overlay
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: api
-                port:
-                  number: 8000
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: web
-                port:
-                  number: 8080
+  ingressClassName: tailscale
+  defaultBackend:
+    service:
+      name: web
+      port:
+        number: 8080
   tls:
     - hosts:
-        - expenses.example.com
-      secretName: expense-tracker-tls
+        - expense-tracker  # MagicDNS hostname on the tailnet

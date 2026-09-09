@@ -3,8 +3,10 @@
 The pipeline is defined in [Jenkinsfile](../Jenkinsfile) (declarative). It is designed for the target flow:
 
 ```
-Developer → Git → GitHub → Jenkins CI → OCI registry → GitOps repo → FluxCD → Kubernetes
+Developer → Git → GitHub → Jenkins CI → GHCR → GitOps repo (dgs-private-cloud) → FluxCD → Kubernetes
 ```
+
+The pipeline runs on the `jenkins-agent-01` agent and uses `pollSCM` (every ~2 minutes) because Jenkins is privately accessible and GitHub cannot reach it with a webhook. Production deployment happens only from `main`.
 
 ## Pipeline stages
 
@@ -19,31 +21,30 @@ Developer → Git → GitHub → Jenkins CI → OCI registry → GitOps repo →
 | **Frontend: analyze + test** | `flutter pub get`, `flutter analyze`, `flutter test` |
 | **Docker: build** | Build API + web images, tagged with commit SHA + build number |
 | **Docker: scan** | Trivy image scan (HIGH/CRITICAL) |
-| **Docker: push** | Push to the OCI registry |
+| **Docker: push** | Push immutable images to GHCR |
 | **GitOps: update manifests** | (main only) Update image tags in the GitOps repo → FluxCD reconciles |
 
 ## Configuration (no hard-coded values)
 
-All infrastructure-specific values come from **Jenkins credentials** and **environment variables**, never committed:
+All credentials come from **Jenkins credentials**, never committed:
 
 | Value | Source |
 |---|---|
-| `oci-registry-credentials` | Jenkins credential (username/password) |
-| `gitops-repo-credentials` | Jenkins credential (username/token) |
-| `OCI_REGISTRY_URL` | Jenkins global env var |
-| `GITOPS_REPO_URL` | Jenkins global env var |
-| `WEB_API_BASE_URL` | Jenkins global env var (the public API URL for the web build) |
+| `oci-registry-credentials` | Jenkins credential (GHCR username/PAT) |
+| `gitops-repo-credentials` | Jenkins credential (GitHub username/PAT for the GitOps repo) |
+
+The registry (`ghcr.io/dgsuma`) and GitOps repo (`dgs-private-cloud`) are fixed for this deployment and defined in the Jenkinsfile.
 
 ## Image tagging
 
-Images are tagged with `<short-commit-sha>-<build-number>` (e.g. `a1b2c3d4-42`) plus `latest`. This gives:
+Images are tagged with `<short-commit-sha>-<build-number>` (e.g. `a1b2c3d4-42`). The tag is computed **after checkout** (`git rev-parse --short=8 HEAD`) because `GIT_COMMIT` is not populated before checkout. `latest` is **not** used for deployment. This gives:
 - **Traceability** — every image maps to an exact commit and build.
 - **Rollback** — redeploy a previous tag.
-- **GitOps** — the prod overlay's `newTag` is updated to the exact tag.
+- **GitOps** — the GitOps repo's `newTag` is updated to the exact immutable tag.
 
 ## GitOps handoff
 
-On `main`, the pipeline clones the GitOps repo, updates the image tags in `infrastructure/kubernetes/overlays/prod/kustomization.yaml`, commits, and pushes. **FluxCD** watches that repo and reconciles the cluster — no direct cluster access from CI.
+On `main`, the pipeline clones the GitOps repo (`dgs-private-cloud`), updates ONLY the image tags in `clusters/beelink-talos/expense-tracker/kustomization.yaml`, commits (`deploy(expense-tracker): <tag>`), and pushes. **FluxCD** watches that repo and reconciles the cluster — Jenkins never runs `kubectl` against the cluster.
 
 ## Quality gates
 

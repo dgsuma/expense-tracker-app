@@ -1,13 +1,19 @@
 // Expense Tracker — declarative CI/CD pipeline.
 //
-// Stages: checkout → deps → lint → unit tests → integration tests → security
-//         → build → docker build → tag → push → update GitOps manifests.
+// Flow: checkout → deps → lint → unit tests → integration tests → security
+//       → Flutter analyze/test → docker build → scan → push to GHCR
+//       → update GitOps repo (dgs-private-cloud) → FluxCD deploys.
 //
-// No infrastructure-specific addresses or credentials are hard-coded — they
-// come from Jenkins credentials and environment configuration.
+// Jenkins NEVER runs kubectl against the cluster — deployment is performed
+// by FluxCD reconciling the GitOps repository.
+//
+// No credentials or secrets are hard-coded — they come from Jenkins
+// credentials (oci-registry-credentials, gitops-repo-credentials).
 
 pipeline {
-    agent any
+    agent {
+        label 'jenkins-agent-01'
+    }
 
     options {
         timestamps()
@@ -15,23 +21,36 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20'))
     }
 
+    triggers {
+        // Jenkins is privately accessible (no public GitHub webhook), so poll SCM.
+        pollSCM('H/2 * * * *')
+    }
+
     environment {
-        // Image names (registry host comes from Jenkins global config).
-        API_IMAGE = "expense-tracker-api"
-        WEB_IMAGE = "expense-tracker-web"
-        // Tag: short commit SHA + build number for traceability.
-        IMAGE_TAG = "${env.GIT_COMMIT?.take(8) ?: 'local'}-${env.BUILD_NUMBER}"
+        // GHCR image coordinates.
+        REGISTRY   = 'ghcr.io'
+        IMAGE_ORG  = 'dgsuma'
+        API_IMAGE  = 'expense-tracker-api'
+        WEB_IMAGE  = 'expense-tracker-web'
+        // GitOps repository (source of truth for the cluster).
+        GITOPS_REPO = 'https://github.com/dgsuma/dgs-private-cloud.git'
+        GITOPS_DIR  = 'clusters/beelink-talos/expense-tracker'
         // Credentials IDs stored in Jenkins (not values).
         REGISTRY_CREDENTIALS = credentials('oci-registry-credentials')
         GITOPS_CREDENTIALS   = credentials('gitops-repo-credentials')
-        REGISTRY_URL         = "${env.OCI_REGISTRY_URL ?: 'registry.example.com'}"
-        GITOPS_REPO          = "${env.GITOPS_REPO_URL ?: 'https://github.com/example/expense-tracker-gitops.git'}"
     }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
+                script {
+                    // GIT_COMMIT is only available AFTER checkout — compute the
+                    // immutable image tag here, not in the environment block.
+                    env.GIT_SHORT = sh(returnStdout: true, script: 'git rev-parse --short=8 HEAD').trim()
+                    env.IMAGE_TAG = "${env.GIT_SHORT}-${env.BUILD_NUMBER}"
+                    echo "Image tag: ${env.IMAGE_TAG}"
+                }
             }
         }
 
@@ -136,14 +155,13 @@ pipeline {
 
         stage('Docker: build images') {
             steps {
+                // API_BASE_URL defaults to empty = same-origin /api calls proxied
+                // by nginx — no host/IP is baked into the Flutter bundle.
                 sh '''
                     docker build -f infrastructure/docker/api.Dockerfile \
-                        -t ${REGISTRY_URL}/${API_IMAGE}:${IMAGE_TAG} \
-                        -t ${REGISTRY_URL}/${API_IMAGE}:latest .
+                        -t ${REGISTRY}/${IMAGE_ORG}/${API_IMAGE}:${IMAGE_TAG} .
                     docker build -f infrastructure/docker/web.Dockerfile \
-                        --build-arg API_BASE_URL=${WEB_API_BASE_URL:-http://localhost:8000} \
-                        -t ${REGISTRY_URL}/${WEB_IMAGE}:${IMAGE_TAG} \
-                        -t ${REGISTRY_URL}/${WEB_IMAGE}:latest .
+                        -t ${REGISTRY}/${IMAGE_ORG}/${WEB_IMAGE}:${IMAGE_TAG} .
                 '''
             }
         }
@@ -152,22 +170,20 @@ pipeline {
             steps {
                 sh '''
                     trivy image --severity HIGH,CRITICAL --exit-code 0 \
-                        ${REGISTRY_URL}/${API_IMAGE}:${IMAGE_TAG} || true
+                        ${REGISTRY}/${IMAGE_ORG}/${API_IMAGE}:${IMAGE_TAG} || true
                     trivy image --severity HIGH,CRITICAL --exit-code 0 \
-                        ${REGISTRY_URL}/${WEB_IMAGE}:${IMAGE_TAG} || true
+                        ${REGISTRY}/${IMAGE_ORG}/${WEB_IMAGE}:${IMAGE_TAG} || true
                 '''
             }
         }
 
-        stage('Docker: push') {
+        stage('Docker: push to GHCR') {
             steps {
                 sh '''
-                    echo ${REGISTRY_CREDENTIALS_PSW} | docker login ${REGISTRY_URL} \
+                    echo ${REGISTRY_CREDENTIALS_PSW} | docker login ${REGISTRY} \
                         -u ${REGISTRY_CREDENTIALS_USR} --password-stdin
-                    docker push ${REGISTRY_URL}/${API_IMAGE}:${IMAGE_TAG}
-                    docker push ${REGISTRY_URL}/${API_IMAGE}:latest
-                    docker push ${REGISTRY_URL}/${WEB_IMAGE}:${IMAGE_TAG}
-                    docker push ${REGISTRY_URL}/${WEB_IMAGE}:latest
+                    docker push ${REGISTRY}/${IMAGE_ORG}/${API_IMAGE}:${IMAGE_TAG}
+                    docker push ${REGISTRY}/${IMAGE_ORG}/${WEB_IMAGE}:${IMAGE_TAG}
                 '''
             }
         }
@@ -177,17 +193,17 @@ pipeline {
                 branch 'main'
             }
             steps {
-                // Update the image tags in the GitOps repo; FluxCD reconciles.
+                // Update ONLY the image tags in the GitOps repo; FluxCD reconciles.
+                // Jenkins never touches the cluster directly.
                 sh '''
-                    git clone https://${GITOPS_CREDENTIALS_USR}:${GITOPS_CREDENTIALS_PSW}@${GITOPS_REPO#https://} gitops
-                    cd gitops
-                    # Update the prod overlay image tags.
-                    sed -i "s|newTag: .*|newTag: \\"${IMAGE_TAG}\\"|g" \
-                        infrastructure/kubernetes/overlays/prod/kustomization.yaml
+                    git clone https://${GITOPS_CREDENTIALS_USR}:${GITOPS_CREDENTIALS_PSW}@github.com/dgsuma/dgs-private-cloud.git gitops
+                    cd gitops/${GITOPS_DIR}
+                    sed -i "/name: ${API_IMAGE}/,/newTag:/ s|newTag: .*|newTag: \\"${IMAGE_TAG}\\"|" kustomization.yaml
+                    sed -i "/name: ${WEB_IMAGE}/,/newTag:/ s|newTag: .*|newTag: \\"${IMAGE_TAG}\\"|" kustomization.yaml
                     git config user.email "ci@expense-tracker"
-                    git config user.name "CI"
-                    git add .
-                    git commit -m "ci: deploy ${IMAGE_TAG}" || echo "no changes"
+                    git config user.name "Jenkins CI"
+                    git add kustomization.yaml
+                    git commit -m "deploy(expense-tracker): ${IMAGE_TAG}" || echo "no changes"
                     git push
                 '''
             }

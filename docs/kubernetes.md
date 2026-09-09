@@ -11,14 +11,16 @@ infrastructure/kubernetes/
 │   ├── configmap.yaml       # Non-secret config
 │   ├── secret.example.yaml  # Documents required secret keys (no real values)
 │   ├── db.yaml              # PostgreSQL StatefulSet + headless Service + PVC
-│   ├── api.yaml             # API Deployment + Service
+│   ├── api.yaml             # API Deployment (+ migration initContainer) + Service
 │   ├── web.yaml             # Web Deployment + Service
-│   ├── ingress.yaml         # Ingress with TLS (cert-manager)
+│   ├── redis.yaml           # Redis (rate limiting)
+│   ├── backup.yaml          # DB backup CronJob + PVC
+│   ├── ingress.yaml         # Tailscale ingress (private, MagicDNS HTTPS)
 │   └── kustomization.yaml
 ├── overlays/
-│   ├── dev/                 # 1 replica, :dev tags, expenses.dev.local
+│   ├── dev/                 # 1 replica, :dev tags
 │   │   └── kustomization.yaml
-│   └── prod/                # 3 API replicas, pinned tags, real hostname + CORS
+│   └── prod/                # GHCR images, pinned tags, Tailscale hostname + CORS
 │       └── kustomization.yaml
 └── flux/
     └── kustomization.yaml   # FluxCD entry point → overlays/prod
@@ -27,11 +29,11 @@ infrastructure/kubernetes/
 ## Design decisions
 
 - **StatefulSet for Postgres** — stable network identity and persistent storage via a `volumeClaimTemplate` (5Gi). A headless Service provides the stable DNS name `db`.
-- **Deployments for api/web** — stateless, horizontally scalable. The API is stateless (JWT auth, no server-side sessions), so it scales freely.
+- **Deployments for api/web** — stateless. The API runs **1 replica** initially; DB migrations run in an `initContainer` (same immutable image, `alembic upgrade head` from `/app/database`) before the API starts, so migrations are tied to the rollout.
 - **ConfigMap + Secret split** — non-secret config in a ConfigMap; secrets (`POSTGRES_PASSWORD`, `JWT_SECRET_KEY`) referenced from a Secret. **No real secret values are committed** — see Secrets below.
 - **Probes** — liveness (`/health`) and readiness (`/ready`) on the API; the readiness probe checks DB connectivity so traffic only routes to pods that can serve.
 - **Resource requests/limits** — set on all containers for scheduling and QoS.
-- **Ingress** — routes `/api` to the API service and `/` to the web service, TLS via cert-manager.
+- **Ingress** — private **Tailscale** ingress (`ingressClassName: tailscale`). Traffic enters the **web** service only; the web nginx proxies `/api/` to the API service internally. The app is reachable only over the tailnet at a MagicDNS HTTPS URL. No public ingress, no Tailscale Funnel.
 
 ## Secrets strategy
 

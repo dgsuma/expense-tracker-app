@@ -6,35 +6,31 @@ namespace: expense-tracker
 resources:
   - ../../base
 
-# Prod: pinned image tags (set by CI), higher replicas, real hostname.
+# Prod: immutable GHCR images (tags set by CI), private Tailscale ingress.
+# Jenkins updates ONLY the newTag fields below via the GitOps repo; FluxCD
+# reconciles the cluster. Tags are <short-sha>-<build-number>, never `latest`.
 images:
   - name: expense-tracker-api
-    newTag: "0.1.0"  # CI overrides with the release tag
+    newName: ghcr.io/dgsuma/expense-tracker-api
+    newTag: "0.1.0"  # CI overrides with the immutable release tag
   - name: expense-tracker-web
+    newName: ghcr.io/dgsuma/expense-tracker-web
     newTag: "0.1.0"
 
 patches:
-  - target:
-      kind: Deployment
-      name: api
-    patch: |
-      - op: replace
-        path: /spec/replicas
-        value: 3
+  # Tailscale MagicDNS hostname for the tailnet. Replace `tailnet-name` with
+  # your actual tailnet name (or leave the base default). No public ingress.
   - target:
       kind: Ingress
       name: expense-tracker
     patch: |
       - op: replace
-        path: /spec/rules/0/host
-        value: expenses.yourdomain.com
-      - op: replace
         path: /spec/tls/0/hosts/0
-        value: expenses.yourdomain.com
+        value: expense-tracker.tailnet-name.ts.net
   - target:
       kind: ConfigMap
       name: expense-tracker-config
     patch: |
       - op: replace
         path: /data/API_CORS_ORIGINS
-        value: "https://expenses.yourdomain.com"
+        value: "https://expense-tracker.tailnet-name.ts.net"

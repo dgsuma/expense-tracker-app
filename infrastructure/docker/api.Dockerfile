@@ -28,6 +28,9 @@ COPY --from=builder /install /usr/local
 
 WORKDIR /app
 COPY services/api/app ./app
+# Alembic migrations + config so the same immutable image can run
+# `cd /app/database && alembic upgrade head` (used by the K8s initContainer).
+COPY database ./database
 
 USER app
 

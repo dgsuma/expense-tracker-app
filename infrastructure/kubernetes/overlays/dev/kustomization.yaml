@@ -33,8 +33,5 @@ patches:
       name: expense-tracker
     patch: |
       - op: replace
-        path: /spec/rules/0/host
-        value: expenses.dev.local
-      - op: replace
         path: /spec/tls/0/hosts/0
-        value: expenses.dev.local
+        value: expense-tracker-dev

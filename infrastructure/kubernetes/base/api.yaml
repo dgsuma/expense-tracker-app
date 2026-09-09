@@ -6,7 +6,8 @@ metadata:
   labels:
     app: api
 spec:
-  replicas: 2
+  # Single replica: DB migrations run in an initContainer tied to the rollout.
+  replicas: 1
   selector:
     matchLabels:
       app: api
@@ -15,6 +16,23 @@ spec:
       labels:
         app: api
     spec:
+      # Run Alembic migrations before the API starts, using the SAME immutable
+      # image. Receives the same ConfigMap/Secret env as the app container.
+      initContainers:
+        - name: db-migrate
+          image: expense-tracker-api:latest  # replaced by Kustomize image override
+          imagePullPolicy: IfNotPresent
+          workingDir: /app/database
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef:
+                name: expense-tracker-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: expense-tracker-secrets
+                  key: POSTGRES_PASSWORD
       containers:
         - name: api
           image: expense-tracker-api:latest  # replaced by Kustomize image override
