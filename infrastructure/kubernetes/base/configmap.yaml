@@ -3,17 +3,21 @@ kind: ConfigMap
 metadata:
   name: expense-tracker-config
   namespace: expense-tracker
+
 data:
   APP_ENV: "production"
   LOG_LEVEL: "INFO"
+
   POSTGRES_HOST: "db"
   POSTGRES_PORT: "5432"
   POSTGRES_DB: "expense_tracker"
   POSTGRES_USER: "expense_app"
+
   API_PORT: "8000"
-  # Overridden per-overlay. Comma-separated allowed origins for the web app.
-  # The web app is same-origin via the nginx /api/ proxy, so CORS is only for
-  # direct API access (e.g. Swagger). Default to the Tailscale MagicDNS origin.
-  API_CORS_ORIGINS: "https://expense-tracker.tailnet-name.ts.net"
-  # Redis for rate limiting (service name in the cluster).
+
+  # Flutter web uses same-origin /api requests through nginx.
+  # No cross-origin browser access is required for production.
+  API_CORS_ORIGINS: ""
+
+  # Redis for rate limiting.
   REDIS_URL: "redis://redis:6379/0"

@@ -6,31 +6,25 @@ namespace: expense-tracker
 resources:
   - ../../base
 
-# Prod: immutable GHCR images (tags set by CI), private Tailscale ingress.
-# Jenkins updates ONLY the newTag fields below via the GitOps repo; FluxCD
-# reconciles the cluster. Tags are <short-sha>-<build-number>, never `latest`.
+# Production images are published to private GHCR.
+# Jenkins/Flux will deploy immutable tags such as <short-sha>-<build-number>.
 images:
   - name: expense-tracker-api
     newName: ghcr.io/dgsuma/expense-tracker-api
-    newTag: "0.1.0"  # CI overrides with the immutable release tag
+    newTag: "0.1.0"
+
   - name: expense-tracker-web
     newName: ghcr.io/dgsuma/expense-tracker-web
     newTag: "0.1.0"
 
+# Allow Kubernetes to pull the private API and web images from GHCR.
+# The ghcr-pull Secret itself is created directly in the cluster and is
+# intentionally NOT committed to Git.
 patches:
-  # Tailscale MagicDNS hostname for the tailnet. Replace `tailnet-name` with
-  # your actual tailnet name (or leave the base default). No public ingress.
   - target:
-      kind: Ingress
-      name: expense-tracker
+      kind: Deployment
     patch: |
-      - op: replace
-        path: /spec/tls/0/hosts/0
-        value: expense-tracker.tailnet-name.ts.net
-  - target:
-      kind: ConfigMap
-      name: expense-tracker-config
-    patch: |
-      - op: replace
-        path: /data/API_CORS_ORIGINS
-        value: "https://expense-tracker.tailnet-name.ts.net"
+      - op: add
+        path: /spec/template/spec/imagePullSecrets
+        value:
+          - name: ghcr-pull

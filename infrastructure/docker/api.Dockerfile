@@ -19,6 +19,7 @@ FROM ${PYTHON_IMAGE} AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH="/app/services/api" \
     PATH="/usr/local/bin:${PATH}"
 
 # Non-root runtime user
@@ -27,12 +28,18 @@ RUN groupadd --system app && useradd --system --gid app app
 COPY --from=builder /install /usr/local
 
 WORKDIR /app
-COPY services/api/app ./app
-# Alembic migrations + config so the same immutable image can run
-# `cd /app/database && alembic upgrade head` (used by the K8s initContainer).
+
+# Keep the repository-style directory structure inside the image.
+# This allows both FastAPI and Alembic migrations to import the app correctly.
+COPY services/api/app ./services/api/app
+
+# Alembic migrations + config so the same immutable image can run:
+# cd /app/database && alembic upgrade head
 COPY database ./database
 
 USER app
+
+WORKDIR /app/services/api
 
 EXPOSE 8000
 
