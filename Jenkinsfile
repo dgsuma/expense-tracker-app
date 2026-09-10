@@ -58,7 +58,7 @@ pipeline {
             steps {
                 dir('services/api') {
                     sh '''
-                        python3 -m venv .venv
+                        /usr/local/bin/uv venv --python 3.12 --seed .venv
                         . .venv/bin/activate
                         pip install --upgrade pip
                         pip install -r requirements-dev.txt
